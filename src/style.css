@@ -86,6 +86,22 @@ body {
   transform: scale(0.98);
 }
 
+/* Section loading → reveal fade-in */
+.section-fade-in {
+  animation: sectionReveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes sectionReveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

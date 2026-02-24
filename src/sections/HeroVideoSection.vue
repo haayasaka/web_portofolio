@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
+import SectionLoader from '@/components/SectionLoader.vue'
+import { useResourceLoader } from '@/composables/useResourceLoader'
 
 // ─── Asset URLs ────────────────────────────────────────────────────────────────
 const videoSrc    = new URL('../../resources/video/animation.mp4', import.meta.url).href
 const maskingSrc  = new URL('../../resources/herovideo/himakom-masking.svg', import.meta.url).href
 const logoSrc     = new URL('../../resources/herovideo/himakom.svg', import.meta.url).href
+
+const { isReady } = useResourceLoader({
+  images: [maskingSrc, logoSrc],
+  videos: [videoSrc],
+})
 
 // ─── Refs ──────────────────────────────────────────────────────────────────────
 const outerRef  = ref<HTMLElement | null>(null)
@@ -234,6 +241,11 @@ const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
       style="height: 100vh; background: #000;"
     >
 
+      <!-- Loading state -->
+      <SectionLoader v-if="!isReady" />
+
+      <template v-else>
+
       <!-- ══════════════════════════════════════════════════════════════════
            LAYER 1 (z:0) — Background video full-screen (selalu main)
            Tampil sejak awal masuk section, sebelum masking muncul.
@@ -350,6 +362,7 @@ const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
         </div>
       </div>
 
+      </template>
     </div>
   </div>
 </template>

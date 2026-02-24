@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import SectionLoader from '@/components/SectionLoader.vue'
+import { useResourceLoader } from '@/composables/useResourceLoader'
 
 const NUM_TABS = 4
 const outerRef = ref<HTMLElement | null>(null)
@@ -11,6 +13,10 @@ const kmipnHackathon = new URL('../../resources/prestasi/kmipn-hackathon.webp', 
 const mapresPhoto = new URL('../../resources/prestasi/mapres-photo.webp', import.meta.url).href
 const arshantaraLogo = new URL('../../resources/prestasi/arshantara-logo.svg', import.meta.url).href
 const ictLogo = new URL('../../resources/prestasi/ict-logo.webp', import.meta.url).href
+
+const { isReady } = useResourceLoader({
+  images: [kmipnLogo, kmipnHackathon, mapresPhoto, arshantaraLogo, ictLogo],
+})
 
 function onScroll() {
   const el = outerRef.value
@@ -48,8 +54,12 @@ onBeforeUnmount(() => {
     ref="outerRef"
     :style="`height: ${(NUM_TABS + 1) * 100}vh;`"
   >
+    <!-- Loading state -->
+    <SectionLoader v-if="!isReady" min-height="100vh" />
+
     <div
-      class="sticky top-0 overflow-hidden"
+      v-else
+      class="sticky top-0 overflow-hidden section-fade-in"
       style="height: 100vh; background: #111111;"
     >
       <!-- Content wrapper padded untuk global navbar -->

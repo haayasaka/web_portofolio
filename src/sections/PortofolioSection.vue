@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
+import SectionLoader from '@/components/SectionLoader.vue'
+import { useResourceLoader } from '@/composables/useResourceLoader'
 
 // ── Asset paths ──────────────────────────────────────────────────────────────
 const artechImg     = new URL('../../resources/portofolio/artech_logo.svg',    import.meta.url).href
@@ -8,6 +10,10 @@ const lucyphoraImg  = new URL('../../resources/portofolio/lucyphora.svg',       
 const smarigaImg    = new URL('../../resources/portofolio/smariga.svg',         import.meta.url).href
 const jtkImg        = new URL('../../resources/portofolio/logo_jtk.svg',        import.meta.url).href
 const presensiImg   = new URL('../../resources/portofolio/presensi_eskul.svg',  import.meta.url).href
+
+const { isReady } = useResourceLoader({
+  images: [artechImg, revielioraImg, lucyphoraImg, smarigaImg, jtkImg, presensiImg],
+})
 
 // ── Portofolio data ──────────────────────────────────────────────────────────
 interface PortofolioItem {
@@ -210,6 +216,10 @@ onBeforeUnmount(() => {
     style="min-height: 100vh;"
     aria-label="Portofolio Section"
   >
+    <!-- Loading state -->
+    <SectionLoader v-if="!isReady" />
+
+    <template v-else>
     <!-- Subtle radial glow behind the carousel -->
     <div class="porto-bg-glow" aria-hidden="true" />
 
@@ -293,6 +303,7 @@ onBeforeUnmount(() => {
         />
       </div>
     </div>
+    </template>
   </section>
 </template>
 

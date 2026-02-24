@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import SectionLoader from '@/components/SectionLoader.vue'
+import { useResourceLoader } from '@/composables/useResourceLoader'
+
 // Skill icon paths moved into root resources with normalized names
 const htmlIcon = new URL('../../resources/skills/html.svg', import.meta.url).href
 const cssIcon = new URL('../../resources/skills/css.webp', import.meta.url).href
@@ -19,6 +22,10 @@ const skills = [
   { name: 'C++', icon: cppIcon },
   { name: 'VueJS', icon: vueIcon },
 ]
+
+const { isReady } = useResourceLoader({
+  images: [htmlIcon, cssIcon, jsIcon, figmaIcon, arduinoIcon, cIcon, cppIcon, vueIcon],
+})
 </script>
 
 <template>
@@ -28,7 +35,10 @@ const skills = [
     style="min-height: 100vh;"
     aria-label="Skills Section"
   >
-    <div class="w-full flex flex-col items-center justify-center px-8 pt-[80px] pb-16" style="min-height: 100vh;">
+    <!-- Loading state -->
+    <SectionLoader v-if="!isReady" />
+
+    <div v-else class="w-full flex flex-col items-center justify-center px-8 pt-[80px] pb-16 section-fade-in" style="min-height: 100vh;">
       <!-- Section Title -->
       <h2 class="text-white text-[52px] md:text-[60px] font-semibold text-center mb-14 tracking-tight">
         Skills &amp; Tech Stack
