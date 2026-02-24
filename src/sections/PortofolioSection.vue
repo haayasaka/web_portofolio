@@ -10,9 +10,10 @@ const lucyphoraImg  = new URL('../../resources/portofolio/lucyphora.svg',       
 const smarigaImg    = new URL('../../resources/portofolio/smariga.svg',         import.meta.url).href
 const jtkImg        = new URL('../../resources/portofolio/logo_jtk.svg',        import.meta.url).href
 const presensiImg   = new URL('../../resources/portofolio/presensi_eskul.svg',  import.meta.url).href
+const webPortoImg   = new URL('../../resources/portofolio/web_portofolio.svg',   import.meta.url).href
 
 const { isReady, blobUrls } = useResourceLoader({
-  images: [artechImg, revielioraImg, lucyphoraImg, smarigaImg, jtkImg, presensiImg],
+  images: [artechImg, revielioraImg, lucyphoraImg, smarigaImg, jtkImg, presensiImg, webPortoImg],
 })
 
 function resolveImg(src: string): string {
@@ -83,6 +84,15 @@ const items: PortofolioItem[] = [
     description:
       'Merancang, dan menciptakan website untuk presensi kegiatan eskul di SMANSA dan pembuatan laporan otomatis siap cetak.',
     bgColor: '#100010',
+  },
+  {
+    id: 'webporto',
+    image: webPortoImg,
+    title: 'Personal Portfolio Website',
+    role: 'Fullstack Developer & Designer',
+    description:
+      'Merancang dan membangun website portofolio personal dari nol menggunakan Vue.js, Tailwind CSS, dan Three.js dengan animasi 3D interaktif.',
+    bgColor: '#111113',
   },
 ]
 
