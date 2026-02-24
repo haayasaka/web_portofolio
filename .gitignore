@@ -6,3 +6,10 @@ dist/
 # Hindari meng-ignore segala sesuatu yang ada pada folder /resources
 !/resources/
 !/resources/**
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
