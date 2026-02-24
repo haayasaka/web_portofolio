@@ -1,13 +1,13 @@
 <script setup lang="ts">
-// Skill icon paths from Specification folder
-const htmlIcon = new URL('../../Specification/PAGE_Skills/image 10.svg', import.meta.url).href
-const cssIcon = new URL('../../Specification/PAGE_Skills/image 11.png', import.meta.url).href
-const jsIcon = new URL('../../Specification/PAGE_Skills/image 15.png', import.meta.url).href
-const figmaIcon = new URL('../../Specification/PAGE_Skills/image 16.png', import.meta.url).href
-const arduinoIcon = new URL('../../Specification/PAGE_Skills/image 7.png', import.meta.url).href
-const cIcon = new URL('../../Specification/PAGE_Skills/image 8.png', import.meta.url).href
-const cppIcon = new URL('../../Specification/PAGE_Skills/image 9.png', import.meta.url).href
-const vueIcon = new URL('../../Specification/PAGE_Skills/image 14.png', import.meta.url).href
+// Skill icon paths moved into root resources with normalized names
+const htmlIcon = new URL('../../resources/skills/html.svg', import.meta.url).href
+const cssIcon = new URL('../../resources/skills/css.webp', import.meta.url).href
+const jsIcon = new URL('../../resources/skills/js.webp', import.meta.url).href
+const figmaIcon = new URL('../../resources/skills/figma.webp', import.meta.url).href
+const arduinoIcon = new URL('../../resources/skills/arduino.webp', import.meta.url).href
+const cIcon = new URL('../../resources/skills/c.webp', import.meta.url).href
+const cppIcon = new URL('../../resources/skills/cpp.webp', import.meta.url).href
+const vueIcon = new URL('../../resources/skills/vue.webp', import.meta.url).href
 
 const skills = [
   { name: 'HTML', icon: htmlIcon },

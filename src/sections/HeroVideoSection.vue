@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 
 // ─── Asset URLs ────────────────────────────────────────────────────────────────
-const videoSrc    = new URL('../../resources/animation.mp4', import.meta.url).href
-const maskingSrc  = new URL('../../resources/himakom_masking.svg', import.meta.url).href
-const logoSrc     = new URL('../../resources/himakom.svg', import.meta.url).href
+const videoSrc    = new URL('../../resources/video/animation.mp4', import.meta.url).href
+const maskingSrc  = new URL('../../resources/herovideo/himakom-masking.svg', import.meta.url).href
+const logoSrc     = new URL('../../resources/herovideo/himakom.svg', import.meta.url).href
 
 // ─── Refs ──────────────────────────────────────────────────────────────────────
 const outerRef  = ref<HTMLElement | null>(null)
 const bgVideo   = ref<HTMLVideoElement | null>(null)
 const maskVideo = ref<HTMLVideoElement | null>(null)
 let   syncRafId = 0   // RAF id untuk video-frame sync loop
+let   visibilityObserver: IntersectionObserver | null = null
+
+const hasActivatedVideoSources = ref(false)
+const isPlaybackZoneActive = ref(false)
 
 
 /**
@@ -47,6 +51,11 @@ function onScroll() {
  * micro-jitter tapi tetap responsif terhadap drift.
  */
 function syncVideoFrames() {
+  if (!isPlaybackZoneActive.value) {
+    syncRafId = 0
+    return
+  }
+
   const src = bgVideo.value
   const dst = maskVideo.value
   if (src && dst && !src.paused) {
@@ -58,28 +67,78 @@ function syncVideoFrames() {
   syncRafId = requestAnimationFrame(syncVideoFrames)
 }
 
+async function ensureVideoSourcesActivated() {
+  if (hasActivatedVideoSources.value) return
+  hasActivatedVideoSources.value = true
+  await nextTick()
+}
+
+function stopPlaybackAndSync() {
+  if (syncRafId) {
+    cancelAnimationFrame(syncRafId)
+    syncRafId = 0
+  }
+
+  bgVideo.value?.pause()
+  maskVideo.value?.pause()
+}
+
+async function startPlaybackAndSync() {
+  await ensureVideoSourcesActivated()
+
+  if (!isPlaybackZoneActive.value) return
+  if (!bgVideo.value || !maskVideo.value) return
+
+  await Promise.all([
+    bgVideo.value.play().catch(() => {}),
+    maskVideo.value.play().catch(() => {}),
+  ])
+
+  if (!isPlaybackZoneActive.value || !bgVideo.value || !maskVideo.value) return
+
+  maskVideo.value.currentTime = bgVideo.value.currentTime
+
+  if (!syncRafId) {
+    syncRafId = requestAnimationFrame(syncVideoFrames)
+  }
+}
+
 // ─── Lifecycle ───────────────────────────────────────────────────────────
 onMounted(() => {
   window.addEventListener('scroll', onScroll, { passive: true })
   onScroll()
 
-  // Mainkan bgVideo lebih dulu sebagai sumber kebenaran
-  bgVideo.value?.play().catch(() => {})
+  if (outerRef.value) {
+    visibilityObserver = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (!entry) return
 
-  // Mainkan maskVideo lalu langsung sejajarkan frame, kemudian mulai sync loop
-  maskVideo.value?.play().then(() => {
-    if (bgVideo.value && maskVideo.value) {
-      maskVideo.value.currentTime = bgVideo.value.currentTime
-    }
-    syncRafId = requestAnimationFrame(syncVideoFrames)
-  }).catch(() => {
-    syncRafId = requestAnimationFrame(syncVideoFrames)
-  })
+        isPlaybackZoneActive.value = entry.isIntersecting
+
+        if (entry.isIntersecting) {
+          void startPlaybackAndSync()
+        } else {
+          stopPlaybackAndSync()
+        }
+      },
+      {
+        // Start loading/playback slightly before the section enters viewport.
+        root: null,
+        rootMargin: '75% 0px',
+        threshold: 0,
+      },
+    )
+
+    visibilityObserver.observe(outerRef.value)
+  }
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
-  if (syncRafId) cancelAnimationFrame(syncRafId)
+  visibilityObserver?.disconnect()
+  visibilityObserver = null
+  stopPlaybackAndSync()
 })
 
 // ─── Phase helpers ─────────────────────────────────────────────────────────────
@@ -123,7 +182,7 @@ const maskOpacity = computed(() => {
  * seluruh viewport tertutup oleh mask — tidak ada visual "snap/jump".
  * Efeknya: mask terasa sudah ada sejak awal, lalu mengecil seiring scroll.
  */
-const SCALE_MAX = 200.0
+const SCALE_MAX = 300.0
 const SCALE_MIN = 0.28
 const maskScale = computed(() => {
   /**
@@ -182,12 +241,11 @@ const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
       <video
         ref="bgVideo"
         class="absolute inset-0 w-full h-full object-cover"
-        autoplay
         muted
         loop
         playsinline
-        preload="auto"
-        :src="videoSrc"
+        preload="metadata"
+        :src="hasActivatedVideoSources ? videoSrc : undefined"
         style="z-index: 0;"
       />
 
@@ -237,12 +295,11 @@ const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
           -->
           <video
             ref="maskVideo"
-            autoplay
             muted
             loop
             playsinline
-            preload="auto"
-            :src="videoSrc"
+            preload="none"
+            :src="hasActivatedVideoSources ? videoSrc : undefined"
             style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: center;"
             :style="{ transform: `scale(${videoCounterScale})` }"
           />
@@ -264,6 +321,8 @@ const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
           :src="logoSrc"
           alt="Himakom Logo"
           class="select-none"
+          loading="lazy"
+          decoding="async"
           style="
             width: min(100vw, 100vh);
             height: min(100vw, 100vh);

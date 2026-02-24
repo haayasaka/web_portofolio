@@ -3,7 +3,7 @@ const emit = defineEmits<{
   navigate: [target: string]
 }>()
 
-const heroPhoto = new URL('../../Specification/PAGE_Hero section/diaiyin_foto_diri-2 1.png', import.meta.url).href
+const heroPhoto = new URL('../../resources/hero/photo.webp', import.meta.url).href
 
 const navItems = [
   { label: 'Profil', target: 'profile' },

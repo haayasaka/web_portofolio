@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MacbookScene from '@/components/MacbookScene.vue'
+
 const tasks = [
   {
     number: '#1',
@@ -19,16 +21,19 @@ const tasks = [
     link: 'https://haayasaka.github.io/web_portofolio/',
   },
 ]
+
+// Local video file (bypasses CORS for THREE.VideoTexture)
+const driveVideoSrc = '/penugasan.mp4'
 </script>
 
 <template>
+  <!-- Tasks Section (with overflow hidden for its own content) -->
   <section
     id="penugasan"
     class="relative w-full bg-black overflow-hidden"
-    style="min-height: 100vh;"
     aria-label="Penugasan Section"
   >
-    <div class="w-full px-10 pt-[80px] pb-10" style="min-height: 100vh;">
+    <div class="w-full px-10 pt-[80px] pb-32">
       <!-- Section title -->
       <h2 class="text-white text-[52px] font-semibold text-center tracking-tight mt-6 mb-12">Penugasan</h2>
 
@@ -54,25 +59,11 @@ const tasks = [
           </a>
         </div>
       </div>
-
-      <!-- Video section -->
-      <div class="max-w-[1100px] mx-auto mt-16">
-        <h3 class="text-white text-[40px] font-semibold text-center mb-8">Video</h3>
-        <!-- Video embed Google Drive 16:9 -->
-        <div
-          class="w-full rounded-xl overflow-hidden"
-          style="aspect-ratio: 16/9; max-height: 620px; background: #000;"
-        >
-          <iframe
-            src="https://drive.google.com/file/d/1gMIvUgeuVEIXLlbS6BV-4bPFX20CCc_h/preview"
-            class="w-full h-full"
-            style="border: none; display: block;"
-            allow="autoplay; encrypted-media; fullscreen"
-            allowfullscreen
-            title="Video Penugasan"
-          />
-        </div>
-      </div>
     </div>
   </section>
+
+  <!-- 3D MacBook Video Section (outside overflow-hidden so sticky works) -->
+  <div class="bg-black">
+    <MacbookScene :video-src="driveVideoSrc" />
+  </div>
 </template>

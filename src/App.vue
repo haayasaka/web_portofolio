@@ -4,12 +4,14 @@ import HeroSection from '@/sections/HeroSection.vue'
 import ProfileSection from '@/sections/ProfileSection.vue'
 import PrestasiSection from '@/sections/PrestasiSection.vue'
 import SkillsSection from '@/sections/SkillsSection.vue'
+import PortofolioSection from '@/sections/PortofolioSection.vue'
 import HeroVideoSection from '@/sections/HeroVideoSection.vue'
 import PenugasanSection from '@/sections/PenugasanSection.vue'
 import KontakSection from '@/sections/KontakSection.vue'
 import AppNavbar from '@/components/AppNavbar.vue'
+import DeviceWarning from '@/components/DeviceWarning.vue'
 
-type SectionId = 'hero' | 'profile' | 'prestasi' | 'skills' | 'hero-video' | 'penugasan' | 'kontak'
+type SectionId = 'hero' | 'profile' | 'prestasi' | 'skills' | 'portofolio' | 'hero-video' | 'penugasan' | 'kontak'
 
 const activeSectionKey = ref<SectionId>('hero')
 
@@ -18,6 +20,7 @@ const sectionOrder: SectionId[] = [
   'profile',
   'prestasi',
   'skills',
+  'portofolio',
   'hero-video',
   'penugasan',
   'kontak',
@@ -88,6 +91,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <!-- Global Device & Orientation Warning -->
+  <DeviceWarning />
+
   <!-- Global fixed navbar dengan slide-down/up animation -->
   <Transition name="navbar-slide">
     <AppNavbar
@@ -103,6 +109,7 @@ onBeforeUnmount(() => {
     <ProfileSection />
     <PrestasiSection />
     <SkillsSection />
+    <PortofolioSection />
     <HeroVideoSection />
     <PenugasanSection />
     <KontakSection />

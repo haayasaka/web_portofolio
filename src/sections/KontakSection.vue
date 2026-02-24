@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // Contact icon paths
-const gmailIcon = new URL('../../Specification/PAGE_Kontak/image 20.png', import.meta.url).href
-const waIcon = new URL('../../Specification/PAGE_Kontak/image 17.png', import.meta.url).href
-const igIcon = new URL('../../Specification/PAGE_Kontak/image 18.png', import.meta.url).href
-const liIcon = new URL('../../Specification/PAGE_Kontak/image 19.png', import.meta.url).href
+const gmailIcon = new URL('../../resources/kontak/gmail.webp', import.meta.url).href
+const waIcon = new URL('../../resources/kontak/whatsapp.webp', import.meta.url).href
+const igIcon = new URL('../../resources/kontak/instagram.webp', import.meta.url).href
+const liIcon = new URL('../../resources/kontak/linkedin.webp', import.meta.url).href
 
 const contacts = [
   { icon: gmailIcon, label: 'hafizfs.personal@gmail.com', href: 'mailto:hafizfs.personal@gmail.com', alt: 'Gmail' },

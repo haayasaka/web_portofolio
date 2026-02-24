@@ -11,8 +11,9 @@ const emit = defineEmits<{
 const navItems = [
   { key: 'profile',    label: 'Profil',     target: 'profile' },
   { key: 'prestasi',   label: 'Prestasi',   target: 'prestasi' },
-  { key: 'skills',     label: 'Skills',     target: 'skills' },
-  { key: 'hero-video', label: 'Penugasan',  target: 'hero-video' },
+  { key: 'skills',      label: 'Skills',      target: 'skills' },
+  { key: 'portofolio',  label: 'Portofolio',  target: 'portofolio' },
+  { key: 'hero-video',  label: 'Penugasan',   target: 'hero-video' },
   { key: 'kontak',     label: 'Kontak',     target: 'kontak' },
 ]
 

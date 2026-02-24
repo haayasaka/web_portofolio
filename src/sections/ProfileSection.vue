@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Profile section - no props needed since navbar is global in App.vue
-const profileImg = new URL('../../resources/profile_img.png', import.meta.url).href
+const profileImg = new URL('../../resources/images/profile.webp', import.meta.url).href
 </script>
 
 <template>
@@ -32,6 +32,8 @@ const profileImg = new URL('../../resources/profile_img.png', import.meta.url).h
               alt="Foto profil Hafiz Fauzan Syafrudin"
               class="w-full h-full object-cover"
               draggable="false"
+              loading="lazy"
+              decoding="async"
             />
           </div>
         </div>

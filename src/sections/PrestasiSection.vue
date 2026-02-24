@@ -6,11 +6,11 @@ const outerRef = ref<HTMLElement | null>(null)
 const activeIndex = ref(0)
 
 // Asset paths
-const kmipnLogo = new URL('../../Specification/PAGE_Prestasi (1)/Logo Utama 1.png', import.meta.url).href
-const kmipnHackathon = new URL('../../Specification/PAGE_Prestasi (1)/HACKHATON 1.png', import.meta.url).href
-const mapresPhoto = new URL('../../Specification/PAGE_Prestasi (2)/image 2.png', import.meta.url).href
-const arshantaraLogo = new URL('../../Specification/PAGE_Prestasi (4)/image 6.svg', import.meta.url).href
-const ictLogo = new URL('../../Specification/PAGE_Prestasi (4)/image 5.png', import.meta.url).href
+const kmipnLogo = new URL('../../resources/prestasi/kmipn-logo.webp', import.meta.url).href
+const kmipnHackathon = new URL('../../resources/prestasi/kmipn-hackathon.webp', import.meta.url).href
+const mapresPhoto = new URL('../../resources/prestasi/mapres-photo.webp', import.meta.url).href
+const arshantaraLogo = new URL('../../resources/prestasi/arshantara-logo.svg', import.meta.url).href
+const ictLogo = new URL('../../resources/prestasi/ict-logo.webp', import.meta.url).href
 
 function onScroll() {
   const el = outerRef.value
@@ -139,13 +139,13 @@ onBeforeUnmount(() => {
             <transition name="prestasi-content" mode="out-in">
               <!-- KMIPN -->
               <div v-if="activeIndex === 0" key="kmipn" class="w-full flex flex-col items-center justify-center gap-6">
-                <img :src="kmipnLogo" alt="KMIPN VII 2025" class="max-h-[200px] object-contain" draggable="false" />
-                <img :src="kmipnHackathon" alt="Kategori Hackathon" class="max-h-[110px] object-contain" draggable="false" />
+                <img :src="kmipnLogo" alt="KMIPN VII 2025" class="max-h-[200px] object-contain" draggable="false" loading="lazy" decoding="async" />
+                <img :src="kmipnHackathon" alt="Kategori Hackathon" class="max-h-[110px] object-contain" draggable="false" loading="lazy" decoding="async" />
               </div>
 
               <!-- Mahasiswa Berprestasi -->
               <div v-else-if="activeIndex === 1" key="mapres" class="w-full flex items-center justify-center">
-                <img :src="mapresPhoto" alt="Mahasiswa Berprestasi Polban 2025" class="max-h-[400px] max-w-full object-contain rounded-lg" draggable="false" />
+                <img :src="mapresPhoto" alt="Mahasiswa Berprestasi Polban 2025" class="max-h-[400px] max-w-full object-contain rounded-lg" draggable="false" loading="lazy" decoding="async" />
               </div>
 
               <!-- LBI -->
@@ -168,11 +168,11 @@ onBeforeUnmount(() => {
               <div v-else-if="activeIndex === 3" key="organisasi" class="w-full flex gap-12 items-center justify-center">
                 <div class="flex flex-col items-center gap-4">
                   <p class="text-white text-[18px] font-medium text-center">Pengurus <span class="text-[#4DA8A8] font-semibold">Sekbid 9</span></p>
-                  <img :src="arshantaraLogo" alt="Arshantara" class="w-44 h-44 object-contain" draggable="false" />
+                  <img :src="arshantaraLogo" alt="Arshantara" class="w-44 h-44 object-contain" draggable="false" loading="lazy" decoding="async" />
                 </div>
                 <div class="flex flex-col items-center gap-4">
                   <p class="text-white text-[18px] font-medium text-center">Ketua Eskul 23/24<br/>ICT Delphi 62</p>
-                  <img :src="ictLogo" alt="ICT" class="w-44 h-44 object-contain" draggable="false" />
+                  <img :src="ictLogo" alt="ICT" class="w-44 h-44 object-contain" draggable="false" loading="lazy" decoding="async" />
                 </div>
               </div>
             </transition>
