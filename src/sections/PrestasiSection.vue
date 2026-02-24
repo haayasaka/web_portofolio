@@ -50,7 +50,7 @@ onBeforeUnmount(() => {
   >
     <div
       class="sticky top-0 overflow-hidden"
-      style="height: 100vh; background: #1D1D1F;"
+      style="height: 100vh; background: #111111;"
     >
       <!-- Content wrapper padded untuk global navbar -->
       <div class="w-full flex flex-col items-center" style="height: 100%; padding-top: 43px;">
@@ -59,8 +59,8 @@ onBeforeUnmount(() => {
 
         <!-- Main card -->
         <div
-          class="w-full flex items-stretch rounded-3xl overflow-hidden flex-1"
-          style="max-width: 1200px; background: #000; margin: 0 16px 40px 16px;"
+          class="flex items-stretch rounded-3xl overflow-hidden flex-1"
+          style="width: 90vw; background: #000; margin-bottom: 40px;"
         >
           <!-- Left: Tab list -->
           <div class="flex flex-col justify-center gap-3 p-8" style="width: 400px; flex-shrink: 0;">

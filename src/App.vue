@@ -1,27 +1,31 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import LoadingScreen from '@/components/LoadingScreen.vue'
+import { ref, defineAsyncComponent, onMounted, onBeforeUnmount } from 'vue'
+
+/* ------------------------------------------------------------------ */
+/*  Critical above-fold: loaded eagerly (part of the initial bundle)  */
+/* ------------------------------------------------------------------ */
 import HeroSection from '@/sections/HeroSection.vue'
 import ProfileSection from '@/sections/ProfileSection.vue'
-import PrestasiSection from '@/sections/PrestasiSection.vue'
-import SkillsSection from '@/sections/SkillsSection.vue'
-import PortofolioSection from '@/sections/PortofolioSection.vue'
-import HeroVideoSection from '@/sections/HeroVideoSection.vue'
-import PenugasanSection from '@/sections/PenugasanSection.vue'
-import KontakSection from '@/sections/KontakSection.vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import DeviceWarning from '@/components/DeviceWarning.vue'
 
+/* ------------------------------------------------------------------ */
+/*  Below-fold sections: lazy-loaded as separate chunks on demand     */
+/*  Vite code-splits each into its own .js file, downloaded only      */
+/*  when the component is first rendered → faster initial paint.      */
+/* ------------------------------------------------------------------ */
+const PrestasiSection   = defineAsyncComponent(() => import('@/sections/PrestasiSection.vue'))
+const SkillsSection     = defineAsyncComponent(() => import('@/sections/SkillsSection.vue'))
+const PortofolioSection = defineAsyncComponent(() => import('@/sections/PortofolioSection.vue'))
+const HeroVideoSection  = defineAsyncComponent(() => import('@/sections/HeroVideoSection.vue'))
+const PenugasanSection  = defineAsyncComponent(() => import('@/sections/PenugasanSection.vue'))
+const KontakSection     = defineAsyncComponent(() => import('@/sections/KontakSection.vue'))
+
+/* ------------------------------------------------------------------ */
+/*  Active section tracking                                           */
+/* ------------------------------------------------------------------ */
 type SectionId = 'hero' | 'profile' | 'prestasi' | 'skills' | 'portofolio' | 'hero-video' | 'penugasan' | 'kontak'
 
-/* ---- Loading gate ---- */
-const isReady = ref(false)
-
-function onLoadingDone() {
-  isReady.value = true
-}
-
-/* ---- Active section tracking ---- */
 const activeSectionKey = ref<SectionId>('hero')
 
 const sectionOrder: SectionId[] = [
@@ -100,35 +104,32 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <!-- Loading screen gate — shown until all resources are preloaded -->
-  <LoadingScreen v-if="!isReady" @done="onLoadingDone" />
+  <!-- Global Device & Orientation Warning -->
+  <DeviceWarning />
 
-  <!-- Actual site content — rendered only after loading completes -->
-  <template v-else>
-    <!-- Global Device & Orientation Warning -->
-    <DeviceWarning />
+  <!-- Global fixed navbar dengan slide-down/up animation -->
+  <Transition name="navbar-slide">
+    <AppNavbar
+      v-if="activeSectionKey !== 'hero'"
+      :active-section-key="activeSectionKey"
+      @navigate="navigateTo"
+      @external="openExternal"
+    />
+  </Transition>
 
-    <!-- Global fixed navbar dengan slide-down/up animation -->
-    <Transition name="navbar-slide">
-      <AppNavbar
-        v-if="activeSectionKey !== 'hero'"
-        :active-section-key="activeSectionKey"
-        @navigate="navigateTo"
-        @external="openExternal"
-      />
-    </Transition>
+  <main>
+    <!-- Critical above-fold: eagerly loaded -->
+    <HeroSection @navigate="navigateTo" />
+    <ProfileSection />
 
-    <main>
-      <HeroSection @navigate="navigateTo" />
-      <ProfileSection />
-      <PrestasiSection />
-      <SkillsSection />
-      <PortofolioSection />
-      <HeroVideoSection />
-      <PenugasanSection />
-      <KontakSection />
-    </main>
-  </template>
+    <!-- Below-fold: lazy-loaded chunks (Suspense provides fallback) -->
+    <Suspense><PrestasiSection /></Suspense>
+    <Suspense><SkillsSection /></Suspense>
+    <Suspense><PortofolioSection /></Suspense>
+    <Suspense><HeroVideoSection /></Suspense>
+    <Suspense><PenugasanSection /></Suspense>
+    <Suspense><KontakSection /></Suspense>
+  </main>
 </template>
 
 <style>
