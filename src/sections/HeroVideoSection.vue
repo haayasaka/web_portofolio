@@ -5,8 +5,8 @@ import { useResourceLoader } from '@/composables/useResourceLoader'
 
 // ─── Asset URLs ────────────────────────────────────────────────────────────────
 const videoSrc    = new URL('../../resources/video/animation.mp4', import.meta.url).href
-const maskingSrc  = new URL('../../resources/herovideo/himakom-masking.svg', import.meta.url).href
-const logoSrc     = new URL('../../resources/herovideo/himakom.svg', import.meta.url).href
+const maskingSrc  = new URL('../../resources/herovideo/himakom-masking.webp', import.meta.url).href
+const logoSrc     = new URL('../../resources/herovideo/himakom.webp', import.meta.url).href
 
 const { isReady: resourcesDownloaded, blobUrls } = useResourceLoader({
   images: [maskingSrc, logoSrc],

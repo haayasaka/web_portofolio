@@ -11,7 +11,7 @@ const activeIndex = ref(0)
 const kmipnLogo = new URL('../../resources/prestasi/kmipn-logo.webp', import.meta.url).href
 const kmipnHackathon = new URL('../../resources/prestasi/kmipn-hackathon.webp', import.meta.url).href
 const mapresPhoto = new URL('../../resources/prestasi/mapres-photo.webp', import.meta.url).href
-const arshantaraLogo = new URL('../../resources/prestasi/arshantara-logo.svg', import.meta.url).href
+const arshantaraLogo = new URL('../../resources/prestasi/arshantara-logo.webp', import.meta.url).href
 const ictLogo = new URL('../../resources/prestasi/ict-logo.webp', import.meta.url).href
 
 const { isReady, blobUrls } = useResourceLoader({

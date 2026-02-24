@@ -4,13 +4,13 @@ import SectionLoader from '@/components/SectionLoader.vue'
 import { useResourceLoader } from '@/composables/useResourceLoader'
 
 // ── Asset paths ──────────────────────────────────────────────────────────────
-const artechImg     = new URL('../../resources/portofolio/artech_logo.svg',    import.meta.url).href
-const revielioraImg = new URL('../../resources/portofolio/reveliora.svg',       import.meta.url).href
-const lucyphoraImg  = new URL('../../resources/portofolio/lucyphora.svg',       import.meta.url).href
-const smarigaImg    = new URL('../../resources/portofolio/smariga.svg',         import.meta.url).href
-const jtkImg        = new URL('../../resources/portofolio/logo_jtk.svg',        import.meta.url).href
-const presensiImg   = new URL('../../resources/portofolio/presensi_eskul.svg',  import.meta.url).href
-const webPortoImg   = new URL('../../resources/portofolio/web_portofolio.svg',   import.meta.url).href
+const artechImg     = new URL('../../resources/portofolio/artech_logo.webp',    import.meta.url).href
+const revielioraImg = new URL('../../resources/portofolio/reveliora.webp',       import.meta.url).href
+const lucyphoraImg  = new URL('../../resources/portofolio/lucyphora.webp',       import.meta.url).href
+const smarigaImg    = new URL('../../resources/portofolio/smariga.webp',         import.meta.url).href
+const jtkImg        = new URL('../../resources/portofolio/logo_jtk.webp',        import.meta.url).href
+const presensiImg   = new URL('../../resources/portofolio/presensi_eskul.webp',  import.meta.url).href
+const webPortoImg   = new URL('../../resources/portofolio/figma_ss.webp',      import.meta.url).href
 
 const { isReady, blobUrls } = useResourceLoader({
   images: [artechImg, revielioraImg, lucyphoraImg, smarigaImg, jtkImg, presensiImg, webPortoImg],
@@ -102,8 +102,8 @@ const allItems = computed(() => [...items, ...items, ...items])
 // ── Carousel logic ───────────────────────────────────────────────────────────
 const wrapperRef = ref<HTMLElement | null>(null)
 const sectionRef = ref<HTMLElement | null>(null)
-const CARD_W     = 300   // px — card width
-const CARD_GAP   = 24    // px — gap between cards
+const CARD_W     = 420   // px — card width (enlarged)
+const CARD_GAP   = 28    // px — gap between cards
 const STEP       = CARD_W + CARD_GAP
 const SPEED      = 0.8   // px per frame (~84px/sec at 60fps)
 
@@ -160,11 +160,58 @@ function getCardOpacity(localIndex: number): number {
 
 
 
+/**
+ * Scroll the carousel so that card at `realIndex` is centered.
+ * Stops auto-scroll, animates smoothly, then resumes auto-scroll.
+ */
+let isScrollingToCard = false
+function scrollToCard(realIndex: number) {
+  // Pause auto-scroll during animation
+  stopScroll()
+  isScrollingToCard = true
+
+  const wrapper = wrapperRef.value
+  if (!wrapper) return
+
+  const wrapperCenter = wrapper.offsetWidth / 2
+
+  // Target: center of the middle-copy card at realIndex
+  const targetCardIdx = items.length + realIndex // middle copy
+  const targetCardCenter = targetCardIdx * STEP + CARD_W / 2
+  const targetOffset = wrapperCenter - targetCardCenter
+
+  const startOffset = offsetX.value
+  const distance = targetOffset - startOffset
+  const duration = 500 // ms
+  const startTime = performance.now()
+
+  function easeOutCubic(t: number) {
+    return 1 - Math.pow(1 - t, 3)
+  }
+
+  function animate(now: number) {
+    const elapsed = now - startTime
+    const t = Math.min(1, elapsed / duration)
+    offsetX.value = startOffset + distance * easeOutCubic(t)
+    updateHighlight()
+
+    if (t < 1) {
+      animId = requestAnimationFrame(animate)
+    } else {
+      animId = 0
+      isScrollingToCard = false
+      // Resume auto-scroll if still visible
+      if (isCarouselActive.value) startScroll()
+    }
+  }
+  animId = requestAnimationFrame(animate)
+}
+
 function startScroll() {
-  if (prefersReducedMotion.value || animId) return
+  if (prefersReducedMotion.value || animId || isScrollingToCard) return
 
   function loop() {
-    if (!isCarouselActive.value) {
+    if (!isCarouselActive.value || isScrollingToCard) {
       animId = 0
       return
     }
@@ -312,7 +359,7 @@ onBeforeUnmount(() => {
           :aria-label="`Proyek ${item.title}`"
           :aria-selected="i === highlightedIndex"
           role="tab"
-          @click="highlightedIndex = i"
+          @click="scrollToCard(i)"
         />
       </div>
     </div>
@@ -364,7 +411,7 @@ onBeforeUnmount(() => {
 }
 .porto-center-indicator {
   display: block;
-  width: 324px;          /* slightly wider than card */
+  width: 444px;          /* slightly wider than card */
   height: 4px;
   border-radius: 2px;
   background: linear-gradient(90deg, transparent, rgba(77,168,168,0.7), transparent);
@@ -376,7 +423,7 @@ onBeforeUnmount(() => {
   width: 100%;
   overflow: hidden;
   /* tall enough to comfortably fit cards + scale room */
-  height: 540px;
+  height: 660px;
   display: flex;
   align-items: center;
 }
@@ -404,7 +451,7 @@ onBeforeUnmount(() => {
 .porto-track {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 28px;
   will-change: transform;
   /* No CSS transition — driven by rAF for smoothness */
 }
@@ -412,7 +459,7 @@ onBeforeUnmount(() => {
 /* ── Individual card ─────────────────────────────────────────────────── */
 .porto-card {
   flex-shrink: 0;
-  width: 300px;
+  width: 420px;
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -436,12 +483,12 @@ onBeforeUnmount(() => {
 /* Image block */
 .porto-card__img-wrap {
   width: 100%;
-  height: 220px;
+  height: 440px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 20px;
+  padding: 24px;
   box-sizing: border-box;
 }
 .porto-card__img {
@@ -459,15 +506,15 @@ onBeforeUnmount(() => {
 
 /* Text block */
 .porto-card__body {
-  padding: 16px 20px 22px;
+  padding: 20px 24px 26px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 .porto-card__role {
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -476,7 +523,7 @@ onBeforeUnmount(() => {
 }
 .porto-card__title {
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: #fff;
   letter-spacing: -0.01em;
@@ -485,10 +532,10 @@ onBeforeUnmount(() => {
 }
 .porto-card__desc {
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.6);
-  line-height: 1.6;
+  line-height: 1.65;
   margin: 4px 0 0;
   /* clamp to 4 lines */
   display: -webkit-box;
@@ -503,11 +550,11 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 36px;
+  margin-top: 16px;
 }
 .porto-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   border: none;
   padding: 0;
@@ -521,8 +568,8 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 .porto-dot--active {
-  width: 22px;
-  border-radius: 3px;
+  width: 28px;
+  border-radius: 4px;
   background: #4DA8A8;
 }
 .porto-dot:hover:not(.porto-dot--active) {

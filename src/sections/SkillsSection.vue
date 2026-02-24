@@ -3,7 +3,7 @@ import SectionLoader from '@/components/SectionLoader.vue'
 import { useResourceLoader } from '@/composables/useResourceLoader'
 
 // Skill icon paths moved into root resources with normalized names
-const htmlIcon = new URL('../../resources/skills/html.svg', import.meta.url).href
+const htmlIcon = new URL('../../resources/skills/html.webp', import.meta.url).href
 const cssIcon = new URL('../../resources/skills/css.webp', import.meta.url).href
 const jsIcon = new URL('../../resources/skills/js.webp', import.meta.url).href
 const figmaIcon = new URL('../../resources/skills/figma.webp', import.meta.url).href

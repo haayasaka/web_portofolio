@@ -168,8 +168,8 @@ function animate() {
   box.getSize(size)
   const maxDim = Math.max(size.x, size.y, size.z)
   const fov = camera.fov * (Math.PI / 180)
-  const dist = (maxDim / 2) / Math.tan(fov / 2) * 1.15
-  camera.position.set(center.x, center.y + 0.3, Math.max(dist, 4.5))
+  const dist = (maxDim / 2) / Math.tan(fov / 2) * 0.92
+  camera.position.set(center.x, center.y + 0.15, Math.max(dist, 3.8))
   camera.lookAt(center.x, center.y, center.z)
 
   renderer.render(scene, camera)
@@ -202,8 +202,9 @@ onBeforeUnmount(() => {
 <template>
   <div ref="containerRef" class="relative w-full bg-black" style="height: 300vh;">
     <div class="macbook-sticky sticky top-0 w-full overflow-hidden" style="height: 100vh;">
-      <div class="absolute bottom-12 left-1/2 -translate-x-1/2 text-center pointer-events-none transition-opacity duration-700"
-           :style="{ opacity: 1 }">
+      <!-- "Video Penugasan" label above the MacBook -->
+      <div class="absolute left-1/2 -translate-x-1/2 text-center pointer-events-none"
+           style="top: 10vh;">
         <p class="text-white/40 text-[12px] tracking-[0.3em] uppercase font-light" style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;">Video Penugasan</p>
       </div>
     </div>
