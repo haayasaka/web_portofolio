@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, nextTick, watch } from 'vue'
 import SectionLoader from '@/components/SectionLoader.vue'
 import { useResourceLoader } from '@/composables/useResourceLoader'
 
@@ -8,31 +8,40 @@ const videoSrc    = new URL('../../resources/video/animation.mp4', import.meta.u
 const maskingSrc  = new URL('../../resources/herovideo/himakom-masking.svg', import.meta.url).href
 const logoSrc     = new URL('../../resources/herovideo/himakom.svg', import.meta.url).href
 
-const { isReady } = useResourceLoader({
+const { isReady: resourcesDownloaded, blobUrls } = useResourceLoader({
   images: [maskingSrc, logoSrc],
   videos: [videoSrc],
 })
+
+function resolveUrl(src: string): string {
+  return blobUrls.value.get(src) ?? src
+}
 
 // ─── Refs ──────────────────────────────────────────────────────────────────────
 const outerRef  = ref<HTMLElement | null>(null)
 const bgVideo   = ref<HTMLVideoElement | null>(null)
 const maskVideo = ref<HTMLVideoElement | null>(null)
-let   syncRafId = 0   // RAF id untuk video-frame sync loop
+let   syncRafId = 0
 let   visibilityObserver: IntersectionObserver | null = null
 
-const hasActivatedVideoSources = ref(false)
 const isPlaybackZoneActive = ref(false)
 
-
 /**
- * progress: 0 → 1  (total scroll travel di dalam outer)
+ * Two-phase readiness:
+ *   Phase 1: resourcesDownloaded — blobs are in memory
+ *   Phase 2: bgVideoBuffered     — bgVideo has parsed & buffered from blob
  *
- * Phase timeline:
- *   0.00 – 0.25 : Video full-screen saja (no mask)
- *   0.25        : Overlay hitam + mask snap muncul (SCALE_MAX = 200)
- *   0.25 – 0.85 : Mask scale-down (Exponential interpolation agar smooth)
- *   0.85 – 1.00 : Swap ke himakom.svg (mask fade-out → logo fade-in)
+ * maskVideo uses the SAME blob URL as bgVideo, so once the blob is
+ * proven decodable by bgVideo, maskVideo will buffer instantly from
+ * the same in-memory blob when it mounts.
+ *
+ * Loader stays visible until BOTH phases complete.
  */
+const bgVideoReady = ref(false)
+
+/** TRUE only when everything is truly paint-ready */
+const sectionReady = computed(() => resourcesDownloaded.value && bgVideoReady.value)
+
 const progress = ref(0)
 
 function onScroll() {
@@ -52,11 +61,6 @@ function onScroll() {
 }
 
 // ─── Video sync ───────────────────────────────────────────────────────────
-/**
- * Setiap animation frame, sync currentTime maskVideo ke bgVideo.
- * Threshold 1 frame (33ms @ 30fps) sebelum koreksi untuk menghindari
- * micro-jitter tapi tetap responsif terhadap drift.
- */
 function syncVideoFrames() {
   if (!isPlaybackZoneActive.value) {
     syncRafId = 0
@@ -74,12 +78,6 @@ function syncVideoFrames() {
   syncRafId = requestAnimationFrame(syncVideoFrames)
 }
 
-async function ensureVideoSourcesActivated() {
-  if (hasActivatedVideoSources.value) return
-  hasActivatedVideoSources.value = true
-  await nextTick()
-}
-
 function stopPlaybackAndSync() {
   if (syncRafId) {
     cancelAnimationFrame(syncRafId)
@@ -91,10 +89,9 @@ function stopPlaybackAndSync() {
 }
 
 async function startPlaybackAndSync() {
-  await ensureVideoSourcesActivated()
-
   if (!isPlaybackZoneActive.value) return
   if (!bgVideo.value || !maskVideo.value) return
+  if (!sectionReady.value) return
 
   await Promise.all([
     bgVideo.value.play().catch(() => {}),
@@ -110,10 +107,56 @@ async function startPlaybackAndSync() {
   }
 }
 
+/**
+ * Set blob src on bgVideo and listen for canplaythrough.
+ * Called once blob download is complete. bgVideo is ALWAYS in the DOM
+ * (behind the loader), so ref is immediately available.
+ * maskVideo is inside v-if="sectionReady" — it mounts after bgVideo
+ * is ready and gets its src from the same blob URL (instant load).
+ */
+function initVideoElements() {
+  const blobVideoUrl = resolveUrl(videoSrc)
+
+  const bg = bgVideo.value
+
+  if (bg) {
+    if (bg.readyState >= 4) {
+      bgVideoReady.value = true
+    } else {
+      bg.oncanplaythrough = () => {
+        bgVideoReady.value = true
+        bg.oncanplaythrough = null
+      }
+    }
+    bg.preload = 'auto'
+    bg.src = blobVideoUrl
+    bg.load()
+  }
+}
+
 // ─── Lifecycle ───────────────────────────────────────────────────────────
 onMounted(() => {
   window.addEventListener('scroll', onScroll, { passive: true })
   onScroll()
+
+  // When resources are downloaded, init video elements immediately
+  if (resourcesDownloaded.value) {
+    nextTick(() => initVideoElements())
+  } else {
+    const unwatch = watch(resourcesDownloaded, (ready) => {
+      if (ready) {
+        unwatch()
+        nextTick(() => initVideoElements())
+      }
+    })
+  }
+
+  // When both videos are buffered AND visible, start playback
+  watch(sectionReady, (ready) => {
+    if (ready && isPlaybackZoneActive.value) {
+      void startPlaybackAndSync()
+    }
+  })
 
   if (outerRef.value) {
     visibilityObserver = new IntersectionObserver(
@@ -123,14 +166,13 @@ onMounted(() => {
 
         isPlaybackZoneActive.value = entry.isIntersecting
 
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && sectionReady.value) {
           void startPlaybackAndSync()
-        } else {
+        } else if (!entry.isIntersecting) {
           stopPlaybackAndSync()
         }
       },
       {
-        // Start loading/playback slightly before the section enters viewport.
         root: null,
         rootMargin: '75% 0px',
         threshold: 0,
@@ -150,16 +192,13 @@ onBeforeUnmount(() => {
 
 // ─── Phase helpers ─────────────────────────────────────────────────────────────
 
-/** Apakah fase masking sudah aktif (progress >= 0.25) */
 const maskingActive = computed(() => progress.value >= 0.25)
 
-/** 0→1 selama fase scale-down (0.25 – 0.85) */
 const scaleProgress = computed(() => {
   const p = (progress.value - 0.25) / 0.60
   return Math.max(0, Math.min(1, p))
 })
 
-/** 0→1 selama fase swap logo (0.85 – 1.00) */
 const swapProgress = computed(() => {
   const p = (progress.value - 0.85) / 0.15
   return Math.max(0, Math.min(1, p))
@@ -167,70 +206,33 @@ const swapProgress = computed(() => {
 
 // ─── Derived values ────────────────────────────────────────────────────────────
 
-/** Overlay hitam: snap ke 1 saat masking aktif (progress >= 0.25) */
 const overlayOpacity = computed(() => maskingActive.value ? 1 : 0)
 
-/**
- * Mask (cutout) opacity:
- *   - Snap ke 1 saat progress >= 0.50 (no fade-in)
- *   - Full selama scale-down (0.50 – 0.85)
- *   - Fade-out di fase swap: hilang selama 90% pertama swap progress
- */
 const maskOpacity = computed(() => {
   if (!maskingActive.value) return 0
   if (progress.value <= 0.85) return 1
-  // Swap phase: mask fade-out selama 0→90% swap progress
   const fadeOutT = Math.min(1, swapProgress.value / 0.9)
   return 1 - fadeOutT
 })
 
-/**
- * SCALE_MAX harus cukup besar sehingga saat mask pertama muncul (progress=0.25)
- * seluruh viewport tertutup oleh mask — tidak ada visual "snap/jump".
- * Efeknya: mask terasa sudah ada sejak awal, lalu mengecil seiring scroll.
- */
 const SCALE_MAX = 300.0
 const SCALE_MIN = 0.28
 const maskScale = computed(() => {
-  /**
-   * Menggunakan Power / Exponential interpolation (Math.pow).
-   * Dengan SCALE_MAX ekstrim (200), linear interpolation akan terasa sangat 
-   * lambat di awal dan sangat cepat "snap" di akhir.
-   * Math.pow memastikan kecepatan visual pengecilan terasa konstan/smooth.
-   */
   return SCALE_MAX * Math.pow(SCALE_MIN / SCALE_MAX, scaleProgress.value)
 })
 
-/**
- * Logo asli:
- *   - Opacity: mulai fade-in hanya setelah 90% swap (mask sudah hampir hilang)
- *   - Scale: TETAP di SCALE_MIN (sama persis ukuran mask di akhir, tidak membesar)
- */
 const logoOpacity = computed(() => {
-  // Hanya muncul setelah 90% swap progress
   const fadeInT = (swapProgress.value - 0.9) / 0.1
   return Math.max(0, Math.min(1, fadeInT))
 })
 const logoScale = computed(() => SCALE_MIN)
 
-/**
- * Counter-scale untuk video di dalam mask:
- * Karena parent di-scale(maskScale), video perlu scale(1/maskScale)
- * agar tampil tetap full-screen (efek net: maskScale × 1/maskScale = 1).
- */
 const videoCounterScale = computed(() => 1 / maskScale.value)
 
-/** Scroll hint: hilang saat mulai scroll */
 const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
 </script>
 
 <template>
-  <!--
-    Outer: 5× viewport height → cukup ruang scroll untuk:
-      - 50% = fase video full-screen
-      - 50% = fase masking animasi
-    Inner: sticky, tetap di viewport selama user ada di dalam outer.
-  -->
   <div
     id="hero-video"
     ref="outerRef"
@@ -241,14 +243,9 @@ const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
       style="height: 100vh; background: #000;"
     >
 
-      <!-- Loading state -->
-      <SectionLoader v-if="!isReady" />
-
-      <template v-else>
-
       <!-- ══════════════════════════════════════════════════════════════════
-           LAYER 1 (z:0) — Background video full-screen (selalu main)
-           Tampil sejak awal masuk section, sebelum masking muncul.
+           Background video — ALWAYS in DOM so it can buffer behind loader.
+           src is set via JS in initVideoElements().
       ══════════════════════════════════════════════════════════════════ -->
       <video
         ref="bgVideo"
@@ -256,26 +253,30 @@ const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
         muted
         loop
         playsinline
-        preload="metadata"
-        :src="hasActivatedVideoSources ? videoSrc : undefined"
+        preload="auto"
         style="z-index: 0;"
       />
 
       <!-- ══════════════════════════════════════════════════════════════════
-           LAYER 2 (z:1) — Overlay hitam
-           Muncul saat fase masking dimulai (progress ≥ 0.50).
-           Menutup background video sehingga hanya cutout logo yang kelihatan.
+           Loading overlay — sits ON TOP of everything (z:50).
+           Only disappears when blobs downloaded + videos canplaythrough.
       ══════════════════════════════════════════════════════════════════ -->
+      <SectionLoader
+        v-if="!sectionReady"
+        style="position: absolute; inset: 0; z-index: 50;"
+      />
+
+      <!-- All visual layers below only mount after sectionReady -->
+      <template v-if="sectionReady">
+
+      <!-- Overlay hitam -->
       <div
         class="absolute inset-0"
         style="z-index: 1; background: #000;"
         :style="{ opacity: overlayOpacity }"
       />
 
-      <!-- ══════════════════════════════════════════════════════════════════
-           LAYER 3 (z:2) — Mask cutout (video terlihat hanya lewat logo)
-           Muncul bersamaan dengan overlay. Scale-down seiring scroll.
-      ══════════════════════════════════════════════════════════════════ -->
+      <!-- Mask cutout -->
       <div
         class="absolute inset-0 flex items-center justify-center"
         style="z-index: 2;"
@@ -296,31 +297,25 @@ const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
             -webkit-mask-size: contain;
           "
           :style="{
-            'mask-image': `url('${maskingSrc}')`,
-            '-webkit-mask-image': `url('${maskingSrc}')`,
+            'mask-image': `url('${resolveUrl(maskingSrc)}')`,
+            '-webkit-mask-image': `url('${resolveUrl(maskingSrc)}')`,
           }"
         >
-          <!-- Clone video untuk di-mask (wajib terpisah dari bg video) -->
-          <!--
-            Counter-scale: video di-scale kebalikan dari parent mask
-            → video SELALU penuh layar, hanya shape mask-nya yang mengecil.
-          -->
+          <!-- Mask video — synced with bgVideo via RAF -->
           <video
             ref="maskVideo"
             muted
             loop
             playsinline
-            preload="none"
-            :src="hasActivatedVideoSources ? videoSrc : undefined"
+            preload="auto"
+            :src="resolveUrl(videoSrc)"
             style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: center;"
             :style="{ transform: `scale(${videoCounterScale})` }"
           />
         </div>
       </div>
 
-      <!-- ══════════════════════════════════════════════════════════════════
-           LAYER 4 (z:3) — Logo swap (himakom.svg asli, fase akhir)
-      ══════════════════════════════════════════════════════════════════ -->
+      <!-- Logo swap -->
       <div
         class="absolute inset-0 flex items-center justify-center"
         style="z-index: 3; pointer-events: none;"
@@ -330,11 +325,10 @@ const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
         }"
       >
         <img
-          :src="logoSrc"
+          :src="resolveUrl(logoSrc)"
           alt="Himakom Logo"
           class="select-none"
-          loading="lazy"
-          decoding="async"
+          loading="eager"
           style="
             width: min(100vw, 100vh);
             height: min(100vw, 100vh);
@@ -344,9 +338,7 @@ const scrollHintOpacity = computed(() => Math.max(0, 1 - progress.value * 8))
         />
       </div>
 
-      <!-- ══════════════════════════════════════════════════════════════════
-           Scroll hint (hilang saat mulai scroll)
-      ══════════════════════════════════════════════════════════════════ -->
+      <!-- Scroll hint -->
       <div
         class="absolute bottom-10 left-1/2 flex flex-col items-center gap-2"
         style="z-index: 5; transform: translateX(-50%);"

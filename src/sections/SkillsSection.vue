@@ -23,9 +23,14 @@ const skills = [
   { name: 'VueJS', icon: vueIcon },
 ]
 
-const { isReady } = useResourceLoader({
+const { isReady, blobUrls } = useResourceLoader({
   images: [htmlIcon, cssIcon, jsIcon, figmaIcon, arduinoIcon, cIcon, cppIcon, vueIcon],
 })
+
+/** Resolve icon src → blob URL (instant) or fallback to original */
+function resolveIcon(originalSrc: string): string {
+  return blobUrls.value.get(originalSrc) ?? originalSrc
+}
 </script>
 
 <template>
@@ -54,11 +59,11 @@ const { isReady } = useResourceLoader({
           <!-- Icon -->
           <div class="w-28 h-28 flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:drop-shadow-[0_0_16px_rgba(77,168,168,0.4)]">
             <img
-              :src="skill.icon"
+              :src="resolveIcon(skill.icon)"
               :alt="skill.name"
               class="w-full h-full object-contain"
               draggable="false"
-              loading="lazy"
+              loading="eager"
             />
           </div>
           <!-- Name -->

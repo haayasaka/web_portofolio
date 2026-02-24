@@ -11,9 +11,13 @@ const smarigaImg    = new URL('../../resources/portofolio/smariga.svg',         
 const jtkImg        = new URL('../../resources/portofolio/logo_jtk.svg',        import.meta.url).href
 const presensiImg   = new URL('../../resources/portofolio/presensi_eskul.svg',  import.meta.url).href
 
-const { isReady } = useResourceLoader({
+const { isReady, blobUrls } = useResourceLoader({
   images: [artechImg, revielioraImg, lucyphoraImg, smarigaImg, jtkImg, presensiImg],
 })
+
+function resolveImg(src: string): string {
+  return blobUrls.value.get(src) ?? src
+}
 
 // ── Portofolio data ──────────────────────────────────────────────────────────
 interface PortofolioItem {
@@ -269,12 +273,11 @@ onBeforeUnmount(() => {
             <!-- Image area -->
             <div class="porto-card__img-wrap">
               <img
-                :src="item.image"
+                :src="resolveImg(item.image)"
                 :alt="item.title"
                 class="porto-card__img"
                 draggable="false"
-                loading="lazy"
-                decoding="async"
+                loading="eager"
               />
             </div>
 

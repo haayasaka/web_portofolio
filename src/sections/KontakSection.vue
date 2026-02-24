@@ -15,9 +15,13 @@ const contacts = [
   { icon: liIcon, label: 'linkedin.com/in/hafiz-fauzan-syafrudin-730a76379/', href: 'https://www.linkedin.com/in/hafiz-fauzan-syafrudin-730a76379/', alt: 'LinkedIn' },
 ]
 
-const { isReady } = useResourceLoader({
+const { isReady, blobUrls } = useResourceLoader({
   images: [gmailIcon, waIcon, igIcon, liIcon],
 })
+
+function resolveIcon(src: string): string {
+  return blobUrls.value.get(src) ?? src
+}
 </script>
 
 <template>
@@ -54,11 +58,11 @@ const { isReady } = useResourceLoader({
           :aria-label="contact.alt"
         >
           <img
-            :src="contact.icon"
+            :src="resolveIcon(contact.icon)"
             :alt="contact.alt"
             class="w-8 h-8 object-contain flex-shrink-0 transition-opacity duration-200 group-hover:opacity-70"
             draggable="false"
-            loading="lazy"
+            loading="eager"
           />
           <span
             class="underline text-[16px] font-normal transition-opacity duration-200 group-hover:opacity-70"

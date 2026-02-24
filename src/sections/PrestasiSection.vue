@@ -14,9 +14,13 @@ const mapresPhoto = new URL('../../resources/prestasi/mapres-photo.webp', import
 const arshantaraLogo = new URL('../../resources/prestasi/arshantara-logo.svg', import.meta.url).href
 const ictLogo = new URL('../../resources/prestasi/ict-logo.webp', import.meta.url).href
 
-const { isReady } = useResourceLoader({
+const { isReady, blobUrls } = useResourceLoader({
   images: [kmipnLogo, kmipnHackathon, mapresPhoto, arshantaraLogo, ictLogo],
 })
+
+function resolveImg(src: string): string {
+  return blobUrls.value.get(src) ?? src
+}
 
 function onScroll() {
   const el = outerRef.value
@@ -149,13 +153,13 @@ onBeforeUnmount(() => {
             <transition name="prestasi-content" mode="out-in">
               <!-- KMIPN -->
               <div v-if="activeIndex === 0" key="kmipn" class="w-full flex flex-col items-center justify-center gap-6">
-                <img :src="kmipnLogo" alt="KMIPN VII 2025" class="max-h-[200px] object-contain" draggable="false" loading="lazy" decoding="async" />
-                <img :src="kmipnHackathon" alt="Kategori Hackathon" class="max-h-[110px] object-contain" draggable="false" loading="lazy" decoding="async" />
+                <img :src="resolveImg(kmipnLogo)" alt="KMIPN VII 2025" class="max-h-[200px] object-contain" draggable="false" loading="eager" />
+                <img :src="resolveImg(kmipnHackathon)" alt="Kategori Hackathon" class="max-h-[110px] object-contain" draggable="false" loading="eager" />
               </div>
 
               <!-- Mahasiswa Berprestasi -->
               <div v-else-if="activeIndex === 1" key="mapres" class="w-full flex items-center justify-center">
-                <img :src="mapresPhoto" alt="Mahasiswa Berprestasi Polban 2025" class="max-h-[400px] max-w-full object-contain rounded-lg" draggable="false" loading="lazy" decoding="async" />
+                <img :src="resolveImg(mapresPhoto)" alt="Mahasiswa Berprestasi Polban 2025" class="max-h-[400px] max-w-full object-contain rounded-lg" draggable="false" loading="eager" />
               </div>
 
               <!-- LBI -->
@@ -178,11 +182,11 @@ onBeforeUnmount(() => {
               <div v-else-if="activeIndex === 3" key="organisasi" class="w-full flex gap-12 items-center justify-center">
                 <div class="flex flex-col items-center gap-4">
                   <p class="text-white text-[18px] font-medium text-center">Pengurus <span class="text-[#4DA8A8] font-semibold">Sekbid 9</span></p>
-                  <img :src="arshantaraLogo" alt="Arshantara" class="w-44 h-44 object-contain" draggable="false" loading="lazy" decoding="async" />
+                  <img :src="resolveImg(arshantaraLogo)" alt="Arshantara" class="w-44 h-44 object-contain" draggable="false" loading="eager" />
                 </div>
                 <div class="flex flex-col items-center gap-4">
                   <p class="text-white text-[18px] font-medium text-center">Ketua Eskul 23/24<br/>ICT Delphi 62</p>
-                  <img :src="ictLogo" alt="ICT" class="w-44 h-44 object-contain" draggable="false" loading="lazy" decoding="async" />
+                  <img :src="resolveImg(ictLogo)" alt="ICT" class="w-44 h-44 object-contain" draggable="false" loading="eager" />
                 </div>
               </div>
             </transition>
