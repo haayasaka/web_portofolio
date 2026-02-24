@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import LoadingScreen from '@/components/LoadingScreen.vue'
 import HeroSection from '@/sections/HeroSection.vue'
 import ProfileSection from '@/sections/ProfileSection.vue'
 import PrestasiSection from '@/sections/PrestasiSection.vue'
@@ -13,6 +14,14 @@ import DeviceWarning from '@/components/DeviceWarning.vue'
 
 type SectionId = 'hero' | 'profile' | 'prestasi' | 'skills' | 'portofolio' | 'hero-video' | 'penugasan' | 'kontak'
 
+/* ---- Loading gate ---- */
+const isReady = ref(false)
+
+function onLoadingDone() {
+  isReady.value = true
+}
+
+/* ---- Active section tracking ---- */
 const activeSectionKey = ref<SectionId>('hero')
 
 const sectionOrder: SectionId[] = [
@@ -91,29 +100,35 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <!-- Global Device & Orientation Warning -->
-  <DeviceWarning />
+  <!-- Loading screen gate — shown until all resources are preloaded -->
+  <LoadingScreen v-if="!isReady" @done="onLoadingDone" />
 
-  <!-- Global fixed navbar dengan slide-down/up animation -->
-  <Transition name="navbar-slide">
-    <AppNavbar
-      v-if="activeSectionKey !== 'hero'"
-      :active-section-key="activeSectionKey"
-      @navigate="navigateTo"
-      @external="openExternal"
-    />
-  </Transition>
+  <!-- Actual site content — rendered only after loading completes -->
+  <template v-else>
+    <!-- Global Device & Orientation Warning -->
+    <DeviceWarning />
 
-  <main>
-    <HeroSection @navigate="navigateTo" />
-    <ProfileSection />
-    <PrestasiSection />
-    <SkillsSection />
-    <PortofolioSection />
-    <HeroVideoSection />
-    <PenugasanSection />
-    <KontakSection />
-  </main>
+    <!-- Global fixed navbar dengan slide-down/up animation -->
+    <Transition name="navbar-slide">
+      <AppNavbar
+        v-if="activeSectionKey !== 'hero'"
+        :active-section-key="activeSectionKey"
+        @navigate="navigateTo"
+        @external="openExternal"
+      />
+    </Transition>
+
+    <main>
+      <HeroSection @navigate="navigateTo" />
+      <ProfileSection />
+      <PrestasiSection />
+      <SkillsSection />
+      <PortofolioSection />
+      <HeroVideoSection />
+      <PenugasanSection />
+      <KontakSection />
+    </main>
+  </template>
 </template>
 
 <style>

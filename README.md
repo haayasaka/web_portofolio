@@ -6,8 +6,7 @@
 
 ## 🔗 Link
 
-_(Tautan hasil deploy akan diletakkan di sini, contoh:
-`https://web-portofolio.pages.dev`)_
+_(Tautan hasil deploy akan diletakkan di sini, contoh: `www.hafizfs.my.id`)_
 
 ## 🛠 Tech Stack
 
