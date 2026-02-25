@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import MacbookScene from '@/components/MacbookScene.vue'
-import penugasan4Video from '../../penugasan_4.mp4'
 
 const tasks = [
   {
@@ -23,8 +22,8 @@ const tasks = [
   },
 ]
 
-// Bundled local video asset (bypasses CORS for THREE.VideoTexture)
-const driveVideoSrc = penugasan4Video
+// External video hosted on Cloudflare R2 (CORS enabled)
+const driveVideoSrc = 'https://media.hafizfs.my.id/penugasan_4.mp4'
 </script>
 
 <template>
