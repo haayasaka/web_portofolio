@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import MacbookScene from '@/components/MacbookScene.vue'
+import penugasan4Video from '../../penugasan_4.mp4'
 
 const tasks = [
   {
@@ -18,12 +19,12 @@ const tasks = [
     number: '#3',
     title: 'Website.',
     description: 'Mahasiswa membuat sebuah website portofolio personal yang merepresentasikan identitas diri secara komprehensif, sebagai bentuk personal branding.',
-    link: 'https://haayasaka.github.io/web_portofolio/',
+    link: 'https://github.com/haayasaka/web_portofolio.git',
   },
 ]
 
-// Local video file (bypasses CORS for THREE.VideoTexture)
-const driveVideoSrc = '/penugasan.mp4'
+// Bundled local video asset (bypasses CORS for THREE.VideoTexture)
+const driveVideoSrc = penugasan4Video
 </script>
 
 <template>

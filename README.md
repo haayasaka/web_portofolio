@@ -4,9 +4,9 @@
 
 **Hafiz FS** (hafizfs)
 
-## 🔗 Link
+## 🔗 Link:
 
-_(Tautan hasil deploy akan diletakkan di sini, contoh: `www.hafizfs.my.id`)_
+www.hafizfs.my.id
 
 ## 🛠 Tech Stack
 

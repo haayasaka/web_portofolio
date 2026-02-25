@@ -9,8 +9,14 @@
     />
     <title>Portfolio</title>
 
-    <!-- DNS-prefetch for external domains used in the page -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <!-- Preload critical self-hosted font for instant rendering -->
+    <link
+      rel="preload"
+      href="/fonts/sf-pro-display-regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link rel="dns-prefetch" href="https://drive.google.com" />
 
     <!-- Preload critical above-fold hero image for instant LCP -->

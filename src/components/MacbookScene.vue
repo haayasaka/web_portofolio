@@ -12,6 +12,7 @@ const containerRef = ref<HTMLElement | null>(null)
 
 // ─── State ─────────────────────────────────────────────────────────────────────
 const progress = ref(0)
+const isMuted = ref(true)
 
 // ─── Asset Path ────────────────────────────────────────────────────────────────
 const modelUrl = new URL('../../resources/models/macbookpro.glb', import.meta.url).href
@@ -121,12 +122,11 @@ function initScene() {
         geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
         geo.attributes.uv.needsUpdate = true
 
-        mesh.material = new THREE.MeshStandardMaterial({
+        const screenMat = new THREE.MeshBasicMaterial({
           map: vTex,
-          emissiveMap: vTex,
-          emissive: new THREE.Color(0xffffff),
-          emissiveIntensity: 0.8,
         })
+        screenMat.toneMapped = false
+        mesh.material = screenMat
       }
     })
 
@@ -153,7 +153,9 @@ function animate() {
   // Play/Pause and Update Logic
   if (videoEl && videoTexture) {
     if (progress.value > 0.45) {
-      if (videoEl.paused) videoEl.play().catch(() => {})
+      if (videoEl.paused) {
+        videoEl.play().catch(() => {})
+      }
       videoTexture.needsUpdate = true
     } else {
       if (!videoEl.paused) videoEl.pause()
@@ -183,6 +185,13 @@ function onResize() {
   camera.updateProjectionMatrix()
 }
 
+function handleUnmute() {
+  if (videoEl) {
+    videoEl.muted = false
+    isMuted.value = false
+  }
+}
+
 onMounted(() => {
   window.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('resize', onResize)
@@ -203,10 +212,30 @@ onBeforeUnmount(() => {
   <div ref="containerRef" class="relative w-full bg-black" style="height: 300vh;">
     <div class="macbook-sticky sticky top-0 w-full overflow-hidden" style="height: 100vh;">
       <!-- "Video Penugasan" label above the MacBook -->
-      <div class="absolute left-1/2 -translate-x-1/2 text-center pointer-events-none"
+      <div class="absolute left-1/2 -translate-x-1/2 text-center"
            style="top: 10vh;">
-        <p class="text-white/40 text-[12px] tracking-[0.3em] uppercase font-light" style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;">Video Penugasan</p>
+        <a href="https://drive.google.com/file/d/1WRF5kvfzRzWCtE1UPkvyabARF5GigsRS/view?usp=sharing"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="text-white/40 text-[12px] tracking-[0.3em] uppercase hover:text-white/70 transition-colors duration-300"
+           style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; font-weight: 600;"
+        >Video Penugasan</a>
       </div>
+
+      <!-- 🔇 Click-to-unmute button -->
+      <button
+        v-if="isMuted && progress > 0.45"
+        @click="handleUnmute"
+        class="absolute bottom-8 right-8 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm cursor-pointer hover:bg-white/20 transition-all duration-300"
+        style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <line x1="23" y1="9" x2="17" y2="15" />
+          <line x1="17" y1="9" x2="23" y2="15" />
+        </svg>
+        Tap untuk suara
+      </button>
     </div>
   </div>
 </template>

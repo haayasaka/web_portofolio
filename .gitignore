@@ -1,6 +1,7 @@
 node_modules/
 dist/
 SVGs/
+PNGs/
 .DS_Store
 *.tsbuildinfo
 
