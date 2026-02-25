@@ -17,9 +17,13 @@ const isModelReady = ref(false)
 const isRebuffering = ref(false)
 const videoDuration = ref(0)
 const bufferedAheadSeconds = ref(0)
+const primeBufferTargetSeconds = ref(5)
 
 const modelUrl = new URL('../../resources/models/macbookpro.glb', import.meta.url).href
 const MIN_BUFFER_SECONDS_BEFORE_RENDER = 5
+const MIN_PRIME_BUFFER_SECONDS = 2
+const PRIME_BUFFER_RELAX_AFTER_MS = 4000
+const PRIME_BUFFER_RELAX_STEP_MS = 2500
 const VIDEO_PLAY_START_PROGRESS = 0.45
 const REBUFFER_ENTER_THRESHOLD_SECONDS = 0.5
 const REBUFFER_RESUME_THRESHOLD_SECONDS = 3
@@ -48,15 +52,25 @@ const framingCenter = new THREE.Vector3()
 const framingSize = new THREE.Vector3()
 
 const isSceneReady = computed(() => isVideoPrimed.value && isModelReady.value)
-const minBufferTargetSeconds = computed(() => {
+const steadyBufferTargetSeconds = computed(() => {
   if (!Number.isFinite(videoDuration.value) || videoDuration.value <= 0) {
     return MIN_BUFFER_SECONDS_BEFORE_RENDER
   }
   return Math.min(MIN_BUFFER_SECONDS_BEFORE_RENDER, Math.max(1, videoDuration.value - 0.25))
 })
+const currentPrimeBufferTargetSeconds = computed(() => {
+  if (!Number.isFinite(videoDuration.value) || videoDuration.value <= 0) {
+    return primeBufferTargetSeconds.value
+  }
+  return Math.min(primeBufferTargetSeconds.value, Math.max(1, videoDuration.value - 0.25))
+})
+const activeBufferTargetSeconds = computed(() => (
+  isSceneReady.value ? steadyBufferTargetSeconds.value : currentPrimeBufferTargetSeconds.value
+))
 const bufferedPreviewLabel = computed(() => {
-  const buffered = Math.min(bufferedAheadSeconds.value, minBufferTargetSeconds.value)
-  return `${buffered.toFixed(1)} / ${minBufferTargetSeconds.value.toFixed(0)}s`
+  const target = activeBufferTargetSeconds.value
+  const buffered = Math.min(bufferedAheadSeconds.value, target)
+  return `${buffered.toFixed(1)} / ${target.toFixed(0)}s`
 })
 
 function onScroll() {
@@ -100,7 +114,7 @@ function enterRebuffering() {
 function tryResumeFromRebuffer(video: HTMLVideoElement) {
   if (!isRebuffering.value) return
 
-  const resumeTarget = Math.min(REBUFFER_RESUME_THRESHOLD_SECONDS, minBufferTargetSeconds.value)
+  const resumeTarget = Math.min(REBUFFER_RESUME_THRESHOLD_SECONDS, steadyBufferTargetSeconds.value)
   const hasEnoughBuffered = bufferedAheadSeconds.value >= resumeTarget
   const canPlay = video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA
 
@@ -194,9 +208,29 @@ function primeVideoForRender(): Promise<void> {
   videoPrimePromise = new Promise<void>((resolve, reject) => {
     const el = ensureVideoElement()
     let settled = false
+    let primeRelaxTimerId = 0
+
+    const updatePrimeBufferTarget = () => {
+      const elapsed = performance.now() - startedAt
+      let nextTarget = MIN_BUFFER_SECONDS_BEFORE_RENDER
+
+      if (elapsed >= PRIME_BUFFER_RELAX_AFTER_MS) {
+        const steps = Math.floor((elapsed - PRIME_BUFFER_RELAX_AFTER_MS) / PRIME_BUFFER_RELAX_STEP_MS) + 1
+        nextTarget = Math.max(MIN_PRIME_BUFFER_SECONDS, MIN_BUFFER_SECONDS_BEFORE_RENDER - steps)
+      }
+
+      if (nextTarget !== primeBufferTargetSeconds.value) {
+        primeBufferTargetSeconds.value = nextTarget
+      }
+    }
+    const startedAt = performance.now()
 
     const cleanup = () => {
       cleanupVideoPrimeListeners = null
+      if (primeRelaxTimerId) {
+        window.clearInterval(primeRelaxTimerId)
+        primeRelaxTimerId = 0
+      }
       el.removeEventListener('loadedmetadata', onStateChange)
       el.removeEventListener('loadeddata', onStateChange)
       el.removeEventListener('canplay', onStateChange)
@@ -224,9 +258,10 @@ function primeVideoForRender(): Promise<void> {
     }
 
     const onStateChange = () => {
+      updatePrimeBufferTarget()
       refreshBufferedMetrics(el)
       const isPlayable = el.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA
-      const hasEnoughBufferedData = bufferedAheadSeconds.value >= minBufferTargetSeconds.value
+      const hasEnoughBufferedData = bufferedAheadSeconds.value >= currentPrimeBufferTargetSeconds.value
 
       if (isPlayable && hasEnoughBufferedData) {
         finish()
@@ -251,6 +286,7 @@ function primeVideoForRender(): Promise<void> {
     el.addEventListener('error', onError)
 
     onStateChange()
+    primeRelaxTimerId = window.setInterval(onStateChange, 600)
     el.load()
   }).finally(() => {
     videoPrimePromise = null
@@ -425,6 +461,7 @@ function handleUnmute() {
 onMounted(() => {
   isUnmounted = false
   isRebuffering.value = false
+  primeBufferTargetSeconds.value = MIN_BUFFER_SECONDS_BEFORE_RENDER
   lastUploadedVideoTime = -1
   lastCameraRefitProgress = Number.NaN
   window.addEventListener('scroll', onScroll, { passive: true })
