@@ -8,3 +8,7 @@ PNGs/
 # Hindari meng-ignore segala sesuatu yang ada pada folder /resources
 !/resources/
 !/resources/**
+
+SF-Pro.dmg
+sf_pkg_expanded/
+sf_payload/
