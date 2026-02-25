@@ -23,7 +23,7 @@ const tasks = [
 ]
 
 // External video hosted on Cloudflare R2 (CORS enabled)
-const driveVideoSrc = 'https://media.hafizfs.my.id/penugasan_4.mp4'
+const driveVideoSrc = 'https://media.hafizfs.my.id/penugasan_4_faststart.mp4'
 </script>
 
 <template>
